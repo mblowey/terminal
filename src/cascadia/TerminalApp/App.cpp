@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <winrt/Microsoft.UI.Xaml.XamlTypeInfo.h>
 #include <winrt/Windows.ApplicationModel.Resources.h>
+#include "../../types/inc/Utils.hpp"
 
 #include "App.g.cpp"
 
@@ -18,6 +19,7 @@ using namespace winrt::Microsoft::Terminal;
 using namespace winrt::Microsoft::Terminal::Settings;
 using namespace winrt::Microsoft::Terminal::TerminalControl;
 using namespace ::TerminalApp;
+using namespace ::Microsoft::Console;
 
 // Note: Generate GUID using TlgGuid.exe tool
 TRACELOGGING_DEFINE_PROVIDER(
@@ -171,7 +173,26 @@ namespace winrt::TerminalApp::implementation
         // Apply the UI theme from our settings to our UI elements
         _ApplyTheme(_settings->GlobalSettings().GetRequestedTheme());
 
-        _OpenNewTab(std::nullopt);
+
+        // Get GUID from commandline
+        GUID profileGUID;
+
+        try {
+            std::wstring cmdLine = GetCommandLineW();
+            int argc;
+            auto argv = CommandLineToArgvW(cmdLine.data(), &argc);
+
+            if (argc > 1) {
+                profileGUID = Utils::GuidFromString(argv[1]);
+                _CreateNewTabFromSettings(profileGUID, _settings->MakeSettings(profileGUID));
+            }
+            else {
+                _OpenNewTab(std::nullopt);
+            }
+        }
+        catch (const wil::ResultException&) {
+            _OpenNewTab(std::nullopt);
+        }
 
         _root.Loaded({ this, &App::_OnLoaded });
     }
