@@ -21,6 +21,7 @@ static constexpr std::string_view ColorSchemeKeyOld{ "colorscheme" };
 static constexpr std::string_view ForegroundKey{ "foreground" };
 static constexpr std::string_view BackgroundKey{ "background" };
 static constexpr std::string_view ColorTableKey{ "colorTable" };
+static constexpr std::string_view TabTitleKey{ "tabTitle" };
 static constexpr std::string_view HistorySizeKey{ "historySize" };
 static constexpr std::string_view SnapOnInputKey{ "snapOnInput" };
 static constexpr std::string_view CursorColorKey{ "cursorColor" };
@@ -63,14 +64,15 @@ Profile::Profile() :
 {
 }
 
-Profile::Profile(const winrt::guid& guid):
+Profile::Profile(const winrt::guid& guid) :
     _guid(guid),
     _name{ L"Default" },
     _schemeName{},
 
-    _defaultForeground{  },
-    _defaultBackground{  },
+    _defaultForeground{},
+    _defaultBackground{},
     _colorTable{},
+    _tabTitle{},
     _historySize{ DEFAULT_HISTORY_SIZE },
     _snapOnInput{ true },
     _cursorColor{ DEFAULT_CURSOR_COLOR },
@@ -78,24 +80,23 @@ Profile::Profile(const winrt::guid& guid):
     _cursorHeight{ DEFAULT_CURSOR_HEIGHT },
 
     _commandline{ L"cmd.exe" },
-    _startingDirectory{  },
+    _startingDirectory{},
     _fontFace{ DEFAULT_FONT_FACE },
     _fontSize{ DEFAULT_FONT_SIZE },
     _acrylicTransparency{ 0.5 },
     _useAcrylic{ false },
-    _scrollbarState{ },
+    _scrollbarState{},
     _closeOnExit{ true },
     _padding{ DEFAULT_PADDING },
-    _icon{ },
-    _backgroundImage{ },
-    _backgroundImageOpacity{ },
-    _backgroundImageStretchMode{ }
+    _icon{},
+    _backgroundImage{},
+    _backgroundImageOpacity{},
+    _backgroundImageStretchMode{}
 {
 }
 
 Profile::~Profile()
 {
-
 }
 
 GUID Profile::GetGuid() const noexcept
@@ -272,6 +273,11 @@ Json::Value Profile::ToJson() const
         root[JsonKey(IconKey)] = icon;
     }
 
+    if (_tabTitle)
+    {
+        root[JsonKey(TabTitleKey)] = winrt::to_string(_tabTitle.value());
+    }
+
     if (_startingDirectory)
     {
         root[JsonKey(StartingDirectoryKey)] = winrt::to_string(_startingDirectory.value());
@@ -369,6 +375,10 @@ Profile Profile::FromJson(const Json::Value& json)
     if (auto cursorShape{ json[JsonKey(CursorShapeKey)] })
     {
         result._cursorShape = _ParseCursorShape(GetWstringFromJson(cursorShape));
+    }
+    if (auto tabTitle{ json[JsonKey(TabTitleKey)] })
+    {
+        result._tabTitle = GetWstringFromJson(tabTitle);
     }
 
     // Control Settings
@@ -478,6 +488,15 @@ bool Profile::HasIcon() const noexcept
     return _icon.has_value();
 }
 
+// Method Description
+// - Sets this profile's tab title.
+// Arguments:
+// - tabTitle: the tab title
+void Profile::SetTabTitle(std::wstring tabTitle) noexcept
+{
+    _tabTitle = tabTitle;
+}
+
 // Method Description:
 // - Sets this profile's icon path.
 // Arguments:
@@ -494,8 +513,8 @@ void Profile::SetIconPath(std::wstring_view path) noexcept
 std::wstring_view Profile::GetIconPath() const noexcept
 {
     return HasIcon() ?
-           std::wstring_view{ _icon.value().c_str(), _icon.value().size() } :
-           std::wstring_view{ L"", 0 };
+               std::wstring_view{ _icon.value().c_str(), _icon.value().size() } :
+               std::wstring_view{ L"", 0 };
 }
 
 // Method Description:
@@ -507,6 +526,26 @@ std::wstring_view Profile::GetIconPath() const noexcept
 std::wstring_view Profile::GetName() const noexcept
 {
     return _name;
+}
+
+// Method Description:
+// - Returns true if profile's custom tab title is set, if one is set. Otherwise returns false.
+// Return Value:
+// - true if this profile's custom tab title is set. Otherwise returns false.
+bool Profile::HasTabTitle() const noexcept
+{
+    return _tabTitle.has_value();
+}
+
+// Method Description:
+// - Returns the custom tab title, if one is set. Otherwise returns the empty string.
+// Return Value:
+// - this profile's custom tab title, if one is set. Otherwise returns the empty string.
+std::wstring_view Profile::GetTabTitle() const noexcept
+{
+    return HasTabTitle() ?
+               std::wstring_view{ _tabTitle.value().c_str(), _tabTitle.value().size() } :
+               std::wstring_view{ L"", 0 };
 }
 
 bool Profile::GetCloseOnExit() const noexcept
@@ -661,16 +700,16 @@ std::wstring_view Profile::_SerializeCursorStyle(const CursorStyle cursorShape)
 {
     switch (cursorShape)
     {
-        case CursorStyle::Underscore:
-            return CursorShapeUnderscore;
-        case CursorStyle::FilledBox:
-            return CursorShapeFilledbox;
-        case CursorStyle::EmptyBox:
-            return CursorShapeEmptybox;
-        case CursorStyle::Vintage:
-            return CursorShapeVintage;
-        default:
-        case CursorStyle::Bar:
-            return CursorShapeBar;
+    case CursorStyle::Underscore:
+        return CursorShapeUnderscore;
+    case CursorStyle::FilledBox:
+        return CursorShapeFilledbox;
+    case CursorStyle::EmptyBox:
+        return CursorShapeEmptybox;
+    case CursorStyle::Vintage:
+        return CursorShapeVintage;
+    default:
+    case CursorStyle::Bar:
+        return CursorShapeBar;
     }
 }

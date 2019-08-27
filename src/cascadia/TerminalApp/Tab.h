@@ -7,7 +7,6 @@
 
 class Tab
 {
-
 public:
     Tab(const GUID& profile, const winrt::Microsoft::Terminal::TerminalControl::TermControl& control);
 
@@ -24,6 +23,8 @@ public:
     void AddHorizontalSplit(const GUID& profile, winrt::Microsoft::Terminal::TerminalControl::TermControl& control);
 
     void UpdateFocus();
+    void ResizeContent(const winrt::Windows::Foundation::Size& newSize);
+    void ResizePane(const winrt::TerminalApp::Direction& direction);
 
     void UpdateSettings(const winrt::Microsoft::Terminal::Settings::TerminalSettings& settings, const GUID& profile);
     winrt::hstring GetFocusedTitle() const;
@@ -32,7 +33,6 @@ public:
     DECLARE_EVENT(Closed, _closedHandlers, winrt::Microsoft::Terminal::TerminalControl::ConnectionClosedEventArgs);
 
 private:
-
     std::shared_ptr<Pane> _rootPane{ nullptr };
 
     bool _focused{ false };
