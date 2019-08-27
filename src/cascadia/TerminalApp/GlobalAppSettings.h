@@ -47,6 +47,12 @@ public:
     bool GetShowTabsInTitlebar() const noexcept;
     void SetShowTabsInTitlebar(const bool showTabsInTitlebar) noexcept;
 
+    std::wstring GetWordDelimiters() const noexcept;
+    void SetWordDelimiters(const std::wstring wordDelimiters) noexcept;
+
+    bool GetCopyOnSelect() const noexcept;
+    void SetCopyOnSelect(const bool copyOnSelect) noexcept;
+
     winrt::Windows::UI::Xaml::ElementTheme GetRequestedTheme() const noexcept;
 
     Json::Value ToJson() const;
@@ -68,6 +74,8 @@ private:
     bool _showTitleInTitlebar;
 
     bool _showTabsInTitlebar;
+    std::wstring _wordDelimiters;
+    bool _copyOnSelect;
     winrt::Windows::UI::Xaml::ElementTheme _requestedTheme;
 
     static winrt::Windows::UI::Xaml::ElementTheme _ParseTheme(const std::wstring& themeString) noexcept;

@@ -23,6 +23,8 @@ static constexpr std::string_view InitialColsKey{ "initialCols" };
 static constexpr std::string_view ShowTitleInTitlebarKey{ "showTerminalTitleInTitlebar" };
 static constexpr std::string_view RequestedThemeKey{ "requestedTheme" };
 static constexpr std::string_view ShowTabsInTitlebarKey{ "showTabsInTitlebar" };
+static constexpr std::string_view WordDelimitersKey{ "wordDelimiters" };
+static constexpr std::string_view CopyOnSelectKey{ "copyOnSelect" };
 
 static constexpr std::wstring_view LightThemeValue{ L"light" };
 static constexpr std::wstring_view DarkThemeValue{ L"dark" };
@@ -37,7 +39,9 @@ GlobalAppSettings::GlobalAppSettings() :
     _initialCols{ DEFAULT_COLS },
     _showTitleInTitlebar{ true },
     _showTabsInTitlebar{ true },
-    _requestedTheme{ ElementTheme::Default }
+    _requestedTheme{ ElementTheme::Default },
+    _wordDelimiters{ DEFAULT_WORD_DELIMITERS },
+    _copyOnSelect{ false }
 {
 }
 
@@ -105,6 +109,26 @@ void GlobalAppSettings::SetRequestedTheme(const ElementTheme requestedTheme) noe
     _requestedTheme = requestedTheme;
 }
 
+std::wstring GlobalAppSettings::GetWordDelimiters() const noexcept
+{
+    return _wordDelimiters;
+}
+
+void GlobalAppSettings::SetWordDelimiters(const std::wstring wordDelimiters) noexcept
+{
+    _wordDelimiters = wordDelimiters;
+}
+
+bool GlobalAppSettings::GetCopyOnSelect() const noexcept
+{
+    return _copyOnSelect;
+}
+
+void GlobalAppSettings::SetCopyOnSelect(const bool copyOnSelect) noexcept
+{
+    _copyOnSelect = copyOnSelect;
+}
+
 #pragma region ExperimentalSettings
 bool GlobalAppSettings::GetShowTabsInTitlebar() const noexcept
 {
@@ -128,6 +152,8 @@ void GlobalAppSettings::ApplyToSettings(TerminalSettings& settings) const noexce
     settings.KeyBindings(GetKeybindings());
     settings.InitialRows(_initialRows);
     settings.InitialCols(_initialCols);
+    settings.WordDelimiters(_wordDelimiters);
+    settings.CopyOnSelect(_copyOnSelect);
 }
 
 // Method Description:
@@ -146,6 +172,8 @@ Json::Value GlobalAppSettings::ToJson() const
     jsonObject[JsonKey(AlwaysShowTabsKey)] = _alwaysShowTabs;
     jsonObject[JsonKey(ShowTitleInTitlebarKey)] = _showTitleInTitlebar;
     jsonObject[JsonKey(ShowTabsInTitlebarKey)] = _showTabsInTitlebar;
+    jsonObject[JsonKey(WordDelimitersKey)] = winrt::to_string(_wordDelimiters);
+    jsonObject[JsonKey(CopyOnSelectKey)] = _copyOnSelect;
     jsonObject[JsonKey(RequestedThemeKey)] = winrt::to_string(_SerializeTheme(_requestedTheme));
     jsonObject[JsonKey(KeybindingsKey)] = AppKeyBindingsSerialization::ToJson(_keybindings);
 
@@ -189,6 +217,16 @@ GlobalAppSettings GlobalAppSettings::FromJson(const Json::Value& json)
     if (auto showTabsInTitlebar{ json[JsonKey(ShowTabsInTitlebarKey)] })
     {
         result._showTabsInTitlebar = showTabsInTitlebar.asBool();
+    }
+
+    if (auto wordDelimiters{ json[JsonKey(WordDelimitersKey)] })
+    {
+        result._wordDelimiters = GetWstringFromJson(wordDelimiters);
+    }
+
+    if (auto copyOnSelect{ json[JsonKey(CopyOnSelectKey)] })
+    {
+        result._copyOnSelect = copyOnSelect.asBool();
     }
 
     if (auto requestedTheme{ json[JsonKey(RequestedThemeKey)] })
