@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "TerminalPage.h"
 #include "Utils.h"
+#include "../../types/inc/Utils.hpp"
 
 #include "TerminalPage.g.cpp"
 #include <winrt/Microsoft.UI.Xaml.XamlTypeInfo.h>
@@ -22,6 +23,7 @@ using namespace winrt::Microsoft::Terminal::TerminalControl;
 using namespace winrt::Microsoft::Terminal::TerminalConnection;
 using namespace winrt::Microsoft::Terminal::Settings;
 using namespace ::TerminalApp;
+using namespace ::Microsoft::Console;
 
 namespace winrt
 {
@@ -86,7 +88,28 @@ namespace winrt::TerminalApp::implementation
         _tabView.TabItemsChanged({ this, &TerminalPage::_OnTabItemsChanged });
 
         _CreateNewTabFlyout();
-        _OpenNewTab(std::nullopt);
+
+        
+        // Try to get GUID from commandlind.
+        // If successful, open the corresponding profile. 
+        GUID profileGUID;
+
+        try {
+            std::wstring cmdLine = GetCommandLineW();
+            int argc;
+            auto argv = CommandLineToArgvW(cmdLine.data(), &argc);
+
+            if (argc > 1) {
+                profileGUID = Utils::GuidFromString(argv[1]);
+                _CreateNewTabFromSettings(profileGUID, _settings->MakeSettings(profileGUID));
+            }
+            else {
+                _OpenNewTab(std::nullopt);
+            }
+        }
+        catch (const wil::ResultException&) {
+            _OpenNewTab(std::nullopt);
+        }
 
         _tabContent.SizeChanged({ this, &TerminalPage::_OnContentSizeChanged });
     }

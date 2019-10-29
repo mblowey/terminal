@@ -160,25 +160,6 @@ namespace winrt::TerminalApp::implementation
         _root->Loaded({ this, &App::_OnLoaded });
         _root->Create();
 
-        // Get GUID from commandline
-        /*GUID profileGUID;
-
-        try {
-            std::wstring cmdLine = GetCommandLineW();
-            int argc;
-            auto argv = CommandLineToArgvW(cmdLine.data(), &argc);
-
-            if (argc > 1) {
-                profileGUID = Utils::GuidFromString(argv[1]);
-                _CreateNewTabFromSettings(profileGUID, _settings->MakeSettings(profileGUID));
-            }
-            else {
-                _OpenNewTab(std::nullopt);
-            }
-        }
-        catch (const wil::ResultException&) {
-            _OpenNewTab(std::nullopt);
-        }*/
         
         _ApplyTheme(_settings->GlobalSettings().GetRequestedTheme());
 
