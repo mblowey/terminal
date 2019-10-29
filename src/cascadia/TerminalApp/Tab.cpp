@@ -10,7 +10,10 @@ using namespace winrt::Windows::UI::Core;
 using namespace winrt::Microsoft::Terminal::Settings;
 using namespace winrt::Microsoft::Terminal::TerminalControl;
 
-static const int TabViewFontSize = 12;
+namespace winrt
+{
+    namespace MUX = Microsoft::UI::Xaml;
+}
 
 Tab::Tab(const GUID& profile, const TermControl& control)
 {
@@ -25,8 +28,7 @@ Tab::Tab(const GUID& profile, const TermControl& control)
 
 void Tab::_MakeTabViewItem()
 {
-    _tabViewItem = ::winrt::Microsoft::UI::Xaml::Controls::TabViewItem{};
-    _tabViewItem.FontSize(TabViewFontSize);
+    _tabViewItem = ::winrt::MUX::Controls::TabViewItem{};
 }
 
 UIElement Tab::GetRootElement()
@@ -50,7 +52,7 @@ TermControl Tab::GetFocusedTerminalControl()
     return _rootPane->GetFocusedTerminalControl();
 }
 
-winrt::Microsoft::UI::Xaml::Controls::TabViewItem Tab::GetTabViewItem()
+winrt::MUX::Controls::TabViewItem Tab::GetTabViewItem()
 {
     return _tabViewItem;
 }
@@ -154,7 +156,7 @@ void Tab::UpdateIcon(const winrt::hstring iconPath)
     _lastIconPath = iconPath;
 
     _tabViewItem.Dispatcher().RunAsync(CoreDispatcherPriority::Normal, [this]() {
-        _tabViewItem.Icon(GetColoredIcon(_lastIconPath));
+        _tabViewItem.IconSource(GetColoredIcon<winrt::MUX::Controls::IconSource>(_lastIconPath));
     });
 }
 
@@ -204,47 +206,28 @@ void Tab::Scroll(const int delta)
 }
 
 // Method Description:
-// - Determines whether the focused pane has sufficient space to be split vertically.
+// - Determines whether the focused pane has sufficient space to be split.
+// Arguments:
+// - splitType: The type of split we want to create.
 // Return Value:
-// - True if the focused pane can be split horizontally. False otherwise.
-bool Tab::CanAddVerticalSplit()
+// - True if the focused pane can be split. False otherwise.
+bool Tab::CanSplitPane(Pane::SplitState splitType)
 {
-    return _rootPane->CanSplitVertical();
+    return _rootPane->CanSplit(splitType);
 }
 
 // Method Description:
-// - Vertically split the focused pane in our tree of panes, and place the
+// - Split the focused pane in our tree of panes, and place the
 //   given TermControl into the newly created pane.
 // Arguments:
+// - splitType: The type of split we want to create.
 // - profile: The profile GUID to associate with the newly created pane.
 // - control: A TermControl to use in the new pane.
 // Return Value:
 // - <none>
-void Tab::AddVerticalSplit(const GUID& profile, TermControl& control)
+void Tab::SplitPane(Pane::SplitState splitType, const GUID& profile, TermControl& control)
 {
-    _rootPane->SplitVertical(profile, control);
-}
-
-// Method Description:
-// - Determines whether the focused pane has sufficient space to be split horizontally.
-// Return Value:
-// - True if the focused pane can be split horizontally. False otherwise.
-bool Tab::CanAddHorizontalSplit()
-{
-    return _rootPane->CanSplitHorizontal();
-}
-
-// Method Description:
-// - Horizontally split the focused pane in our tree of panes, and place the
-//   given TermControl into the newly created pane.
-// Arguments:
-// - profile: The profile GUID to associate with the newly created pane.
-// - control: A TermControl to use in the new pane.
-// Return Value:
-// - <none>
-void Tab::AddHorizontalSplit(const GUID& profile, TermControl& control)
-{
-    _rootPane->SplitHorizontal(profile, control);
+    _rootPane->Split(splitType, profile, control);
 }
 
 // Method Description:

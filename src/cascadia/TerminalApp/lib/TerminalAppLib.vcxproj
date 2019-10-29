@@ -65,10 +65,15 @@
     <ClInclude Include="../GlobalAppSettings.h" />
     <ClInclude Include="../Profile.h" />
     <ClInclude Include="../CascadiaSettings.h" />
-    <ClInclude Include="../AppKeyBindingsSerialization.h" />
     <ClInclude Include="../KeyChordSerialization.h" />
+    <ClInclude Include="../JsonUtils.h" />
     <ClInclude Include="../Utils.h" />
+    <ClInclude Include="../DefaultProfileUtils.h" />
     <ClInclude Include="../TerminalWarnings.h" />
+    <ClInclude Include="../IDynamicProfileGenerator.h" />
+    <ClInclude Include="../PowershellCoreProfileGenerator.h" />
+    <ClInclude Include="../WslDistroGenerator.h" />
+    <ClInclude Include="../AzureCloudShellGenerator.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="../ActionArgs.h"  >
       <DependentUpon>../ActionArgs.idl</DependentUpon>
@@ -106,8 +111,13 @@
     <ClCompile Include="../CascadiaSettingsSerialization.cpp" />
     <ClCompile Include="../AppKeyBindingsSerialization.cpp" />
     <ClCompile Include="../KeyChordSerialization.cpp" />
+    <ClCompile Include="../JsonUtils.cpp" />
     <ClCompile Include="../Utils.cpp" />
+    <ClCompile Include="../DefaultProfileUtils.cpp" />
     <ClCompile Include="../ScopedResourceLoader.cpp" />
+    <ClCompile Include="../PowershellCoreProfileGenerator.cpp" />
+    <ClCompile Include="../WslDistroGenerator.cpp" />
+    <ClCompile Include="../AzureCloudShellGenerator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -265,7 +275,7 @@
   <PropertyGroup>
     <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
     <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
-    <_MUXRoot>$(OpenConsoleDir)\packages\Microsoft.UI.Xaml.2.2.190611001-prerelease\</_MUXRoot>
+    <_MUXRoot>$(OpenConsoleDir)\packages\Microsoft.UI.Xaml.2.2.191021001-prerelease\</_MUXRoot>
     <_MUXAppRoot>$(OpenConsoleDir)\packages\Microsoft.Toolkit.Win32.UI.XamlApplication.6.0.0-preview7\</_MUXAppRoot>
   </PropertyGroup>
   <ItemGroup>
@@ -295,7 +305,7 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('$(OpenConsoleDir)\packages\Microsoft.UI.Xaml.2.2.190611001-prerelease\build\native\Microsoft.UI.Xaml.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(OpenConsoleDir)\packages\Microsoft.UI.Xaml.2.2.190611001-prerelease\build\native\Microsoft.UI.Xaml.targets'))" />
+    <Error Condition="!Exists('$(OpenConsoleDir)\packages\Microsoft.UI.Xaml.2.2.191021001-prerelease\build\native\Microsoft.UI.Xaml.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(OpenConsoleDir)\packages\Microsoft.UI.Xaml.2.2.191021001-prerelease\build\native\Microsoft.UI.Xaml.targets'))" />
     <Error Condition="!Exists('$(OpenConsoleDir)\packages\Microsoft.Toolkit.Win32.UI.XamlApplication.6.0.0-preview7\build\native\Microsoft.Toolkit.Win32.UI.XamlApplication.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(OpenConsoleDir)\packages\Microsoft.Toolkit.Win32.UI.XamlApplication.6.0.0-preview7\build\native\Microsoft.Toolkit.Win32.UI.XamlApplication.targets'))" />
   </Target>
 
@@ -319,4 +329,22 @@
       </PackagingOutputs>
     </ItemGroup>
   </Target>
+
+  <!-- This target will take our defaults.json and stamp it into a .h file that
+  we can include in the code directly. This way, we don't need to worry about
+  failing to load the default settings at runtime. -->
+  <Target Name="_TerminalAppGenerateDefaultsH"
+          Inputs="..\defaults.json"
+          Outputs="Generated Files\defaults.h"
+          BeforeTargets="BeforeClCompile">
+    <Exec Command="powershell.exe -noprofile –ExecutionPolicy Unrestricted $(OpenConsoleDir)\tools\GenerateHeaderForJson.ps1 -JsonFile ..\defaults.json -OutPath '&quot;Generated Files\defaults.h&quot;' -VariableName DefaultJson" />
+  </Target>
+  <!-- Same as above, but for the default profiles.json template -->
+  <Target Name="_TerminalAppGenerateUserSettingsH"
+          Inputs="..\userDefaults.json"
+          Outputs="Generated Files\userDefaults.h"
+          BeforeTargets="BeforeClCompile">
+    <Exec Command="powershell.exe -noprofile –ExecutionPolicy Unrestricted $(OpenConsoleDir)\tools\GenerateHeaderForJson.ps1 -JsonFile ..\userDefaults.json -OutPath '&quot;Generated Files\userDefaults.h&quot;' -VariableName UserSettingsJson" />
+  </Target>
+
 </Project>

@@ -56,13 +56,24 @@ public:
             return HandleDpiChange(_window.get(), wparam, lparam);
         }
 
+            // TODO GitHub #2447: Properly attach WindowUiaProvider for signaling model
+            /*
         case WM_GETOBJECT:
         {
             return HandleGetObject(_window.get(), wparam, lparam);
         }
+        */
 
         case WM_DESTROY:
         {
+            // TODO GitHub #2447: Properly attach WindowUiaProvider for signaling model
+            /*
+            // signal to uia that they can disconnect our uia provider
+            if (_pUiaProvider)
+            {
+                UiaReturnRawElementProvider(hWnd, 0, 0, NULL);
+            }
+            */
             PostQuitMessage(0);
             return 0;
         }
@@ -213,6 +224,15 @@ public:
     {
         _title = newTitle;
         PostMessageW(_window.get(), CM_UPDATE_TITLE, 0, reinterpret_cast<LPARAM>(nullptr));
+    }
+
+    // Method Description:
+    // Reset the current dpi of the window. This method is only called after we change the
+    // initial launch position. This makes sure the dpi is consistent with the monitor on which
+    // the window will launch
+    void RefreshCurrentDPI()
+    {
+        _currentDpi = GetDpiForWindow(_window.get());
     }
 
 protected:

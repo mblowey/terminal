@@ -6,11 +6,15 @@
   <!-- ========================= Headers ======================== -->
   <ItemGroup>
     <ClInclude Include="precomp.h" />
+    <ClInclude Include="JsonTestClass.h" />
   </ItemGroup>
 
   <!-- ========================= Cpp Files ======================== -->
   <ItemGroup>
     <ClCompile Include="SettingsTests.cpp" />
+    <ClCompile Include="ProfileTests.cpp" />
+    <ClCompile Include="ColorSchemeTests.cpp" />
+    <ClCompile Include="KeyBindingsTests.cpp" />
     <ClCompile Include="TabTests.cpp" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -86,11 +90,11 @@
     <!-- From Microsoft.UI.Xaml.targets -->
     <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
     <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
-    <_MUXBinRoot>&quot;$(OpenConsoleDir)packages\Microsoft.UI.Xaml.2.2.190611001-prerelease\runtimes\win10-$(Native-Platform)\native\&quot;</_MUXBinRoot>
+    <_MUXBinRoot>&quot;$(OpenConsoleDir)packages\Microsoft.UI.Xaml.2.2.191021001-prerelease\runtimes\win10-$(Native-Platform)\native\&quot;</_MUXBinRoot>
   </PropertyGroup>
 
 <!-- We actually can just straight up reference MUX here, it's fine -->
-  <Import Project="..\..\..\packages\Microsoft.UI.Xaml.2.2.190611001-prerelease\build\native\Microsoft.UI.Xaml.targets" Condition="Exists('..\..\..\packages\Microsoft.UI.Xaml.2.2.190611001-prerelease\build\native\Microsoft.UI.Xaml.targets')" />
+  <Import Project="..\..\..\packages\Microsoft.UI.Xaml.2.2.191021001-prerelease\build\native\Microsoft.UI.Xaml.targets" Condition="Exists('..\..\..\packages\Microsoft.UI.Xaml.2.2.191021001-prerelease\build\native\Microsoft.UI.Xaml.targets')" />
   <Import Project="..\..\..\packages\Microsoft.Toolkit.Win32.UI.XamlApplication.6.0.0-preview6.2\build\native\Microsoft.Toolkit.Win32.UI.XamlApplication.targets" Condition="Exists('..\..\..\packages\Microsoft.Toolkit.Win32.UI.XamlApplication.6.0.0-preview6.2\build\native\Microsoft.Toolkit.Win32.UI.XamlApplication.targets')" />
 
   <!-- This project will generate individual sxs manifests for each of our winrt libraries -->
@@ -127,7 +131,7 @@
           Outputs="$(OutDir)$(TargetName).AppxManifest.xml"
           DependsOnTargets="_LocalTestsGenerateCombinedManifests">
 
-    <Exec Command="powershell.exe –ExecutionPolicy Unrestricted $(OpenConsoleDir)\tools\GenerateAppxFromManifest.ps1 -SxSManifest $(OutDir)$(TargetName).manifest -AppxManifestPrototype $(TargetName).AppxManifest.prototype.xml -OutPath $(OutDir)$(TargetName).AppxManifest.xml" />
+    <Exec Command="powershell.exe -noprofile –ExecutionPolicy Unrestricted $(OpenConsoleDir)\tools\GenerateAppxFromManifest.ps1 -SxSManifest $(OutDir)$(TargetName).manifest -AppxManifestPrototype $(TargetName).AppxManifest.prototype.xml -OutPath $(OutDir)$(TargetName).AppxManifest.xml" />
 
   </Target>
 

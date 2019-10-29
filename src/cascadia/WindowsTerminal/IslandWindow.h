@@ -23,6 +23,7 @@ public:
 
     [[nodiscard]] virtual LRESULT MessageHandler(UINT const message, WPARAM const wparam, LPARAM const lparam) noexcept override;
     IRawElementProviderSimple* _GetUiaProvider();
+    RECT GetFrameBorderMargins(unsigned int currentDpi);
     void OnResize(const UINT width, const UINT height) override;
     void OnMinimize() override;
     void OnRestore() override;
@@ -31,12 +32,12 @@ public:
 
     virtual void Initialize();
 
-    void SetCreateCallback(std::function<void(const HWND, const RECT)> pfn) noexcept;
+    void SetCreateCallback(std::function<void(const HWND, const RECT, winrt::TerminalApp::LaunchMode& launchMode)> pfn) noexcept;
 
     void UpdateTheme(const winrt::Windows::UI::Xaml::ElementTheme& requestedTheme);
 
 #pragma region IUiaWindow
-    void ChangeViewport(const SMALL_RECT NewWindow)
+    void ChangeViewport(const SMALL_RECT /*NewWindow*/)
     {
         // TODO GitHub #1352: Hook up ScreenInfoUiaProvider to WindowUiaProvider
         // Relevant comment from zadjii-msft:
@@ -57,7 +58,7 @@ public:
         return BaseWindow::GetHandle();
     };
 
-    [[nodiscard]] HRESULT SignalUia(_In_ EVENTID id) override { return E_NOTIMPL; };
+    [[nodiscard]] HRESULT SignalUia(_In_ EVENTID /*id*/) override { return E_NOTIMPL; };
     [[nodiscard]] HRESULT UiaSetTextAreaFocus() override { return E_NOTIMPL; };
 
     RECT GetWindowRect() const noexcept override
@@ -68,6 +69,7 @@ public:
 #pragma endregion
 
     DECLARE_EVENT(DragRegionClicked, _DragRegionClickedHandlers, winrt::delegate<>);
+    DECLARE_EVENT(WindowCloseButtonClicked, _windowCloseButtonClickedHandler, winrt::delegate<>);
 
 protected:
     void ForceResize()
@@ -84,7 +86,7 @@ protected:
 
     winrt::Windows::UI::Xaml::Controls::Grid _rootGrid;
 
-    std::function<void(const HWND, const RECT)> _pfnCreateCallback;
+    std::function<void(const HWND, const RECT, winrt::TerminalApp::LaunchMode& launchMode)> _pfnCreateCallback;
 
     void _HandleCreateWindow(const WPARAM wParam, const LPARAM lParam) noexcept;
 };

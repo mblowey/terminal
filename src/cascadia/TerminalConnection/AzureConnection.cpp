@@ -435,7 +435,8 @@ namespace winrt::Microsoft::Terminal::TerminalConnection::implementation
                 continue;
             }
 
-            _outputHandlers(_StrFormatHelper(ithTenant, _maxStored, nameJson.at(L"displayName").as_string().c_str(), nameJson.at(L"tenantID").as_string().c_str()));
+            auto tenantLine{ wil::str_printf<std::wstring>(ithTenant, _maxStored, nameJson.at(L"displayName").as_string().c_str(), nameJson.at(L"tenantID").as_string().c_str()) };
+            _outputHandlers(tenantLine);
             _maxStored++;
         }
 
@@ -574,37 +575,42 @@ namespace winrt::Microsoft::Terminal::TerminalConnection::implementation
     // - S_OK otherwise
     HRESULT AzureConnection::_TenantChoiceHelper()
     {
-        const auto tenantListAsArray = _tenantList.as_array();
-        _maxSize = tenantListAsArray.size();
-        for (int i = 0; i < _maxSize; i++)
+        try
         {
-            const auto& tenant = tenantListAsArray.at(i);
-            const auto [tenantId, tenantDisplayName] = _crackTenant(tenant);
-            _outputHandlers(_StrFormatHelper(ithTenant, i, tenantDisplayName.c_str(), tenantId.c_str()));
+            const auto tenantListAsArray = _tenantList.as_array();
+            _maxSize = gsl::narrow<int>(tenantListAsArray.size());
+            for (int i = 0; i < _maxSize; i++)
+            {
+                const auto& tenant = tenantListAsArray.at(i);
+                const auto [tenantId, tenantDisplayName] = _crackTenant(tenant);
+                auto tenantLine{ wil::str_printf<std::wstring>(ithTenant, i, tenantDisplayName.c_str(), tenantId.c_str()) };
+                _outputHandlers(tenantLine);
+            }
+            _outputHandlers(winrt::to_hstring(enterTenant));
+            // Use a lock to wait for the user to input a valid number
+            std::unique_lock<std::mutex> tenantNumberLock{ _commonMutex };
+            _canProceed.wait(tenantNumberLock, [=]() {
+                return (_tenantNumber >= 0 && _tenantNumber < _maxSize) || _closing.load();
+            });
+            // User might have closed the tab while we waited for input
+            if (_closing.load())
+            {
+                return E_FAIL;
+            }
+
+            const auto& chosenTenant = tenantListAsArray.at(_tenantNumber);
+            std::tie(_tenantID, _displayName) = _crackTenant(chosenTenant);
+
+            // We have to refresh now that we have the tenantID
+            const auto refreshResponse = _RefreshTokens();
+            _accessToken = refreshResponse.at(L"access_token").as_string();
+            _refreshToken = refreshResponse.at(L"refresh_token").as_string();
+            _expiry = std::stoi(refreshResponse.at(L"expires_on").as_string());
+
+            _state = State::StoreTokens;
+            return S_OK;
         }
-        _outputHandlers(winrt::to_hstring(enterTenant));
-        // Use a lock to wait for the user to input a valid number
-        std::unique_lock<std::mutex> tenantNumberLock{ _commonMutex };
-        _canProceed.wait(tenantNumberLock, [=]() {
-            return (_tenantNumber >= 0 && _tenantNumber < _maxSize) || _closing.load();
-        });
-        // User might have closed the tab while we waited for input
-        if (_closing.load())
-        {
-            return E_FAIL;
-        }
-
-        const auto& chosenTenant = tenantListAsArray.at(_tenantNumber);
-        std::tie(_tenantID, _displayName) = _crackTenant(chosenTenant);
-
-        // We have to refresh now that we have the tenantID
-        const auto refreshResponse = _RefreshTokens();
-        _accessToken = refreshResponse.at(L"access_token").as_string();
-        _refreshToken = refreshResponse.at(L"refresh_token").as_string();
-        _expiry = std::stoi(refreshResponse.at(L"expires_on").as_string());
-
-        _state = State::StoreTokens;
-        return S_OK;
+        CATCH_RETURN();
     }
 
     // Method description:
@@ -930,14 +936,5 @@ namespace winrt::Microsoft::Terminal::TerminalConnection::implementation
                 return;
             }
         }
-    }
-
-    std::wstring AzureConnection::_StrFormatHelper(const wchar_t* const format, int i, const wchar_t* name, const wchar_t* ID)
-    {
-        const auto lengthRequired = _scwprintf(ithTenant, i, name, ID);
-        std::wstring buffer;
-        buffer.resize(lengthRequired + 1);
-        swprintf_s(buffer.data(), buffer.size(), ithTenant, i, name, ID);
-        return buffer;
     }
 }
